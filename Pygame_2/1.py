@@ -1,9 +1,10 @@
 """
 Program by Tsurkis Vera, refactored by Chekal Mikhail
-02.10.2020
+The original program was also improved by adding sun rays
 """
 
 import pygame
+import math
 from pygame.draw import *
 
 pygame.init()
@@ -27,19 +28,17 @@ KHAKI = (223, 214, 154)
 
 ########################################################################################################################
 
-# фон рисунка
-def background(sky_colour, sea_colour, sand_colour, x_wave, y_wave, r_wave):
+def background(sky_colour, sand_colour, x_wave, y_wave, r_wave):
     """
     Функция рисует небо, море и пляж
     :param r_wave: Радиус волны
     :param y_wave: Центр первой волны по x
     :param x_wave: Центр первой волны по y
     :param sky_colour: Цвет неба
-    :param sea_colour: Цвет моря
     :param sand_colour: Цвет песка
     """
     screen.fill(sky_colour)
-    rect(screen, sea_colour, (0, 200, 700, 120))
+    rect(screen, BLUE, (0, 200, 700, 120))
     rect(screen, sand_colour, (0, 320, 700, 180))
     wave_number = int(700 / (4 * r_wave)) + 1
     for _ in range(wave_number):
@@ -58,9 +57,48 @@ def sun(x_sun, y_sun, r_sun):
     circle(screen, SUN_YELLOW, (x_sun, y_sun), r_sun)
 
 
+def sun_rays(x_sun, y_sun, angle, r_sun, r_rays):
+    """
+    Функция рисует лучи солнца
+    :param x_sun: центр солнца по x
+    :param y_sun: центр солнца по y
+    :param angle: угол между лучами
+    :param r_sun: радиус солнца
+    :param r_rays: внешний радиус лучей
+    """
+    inner_circle = []
+    outer_circle = []
+    rays = []
+    # в список вносятся координаты начала лучей
+    for _ in range(int(360 / angle) + 1):
+        x = r_sun * math.cos(angle * _ / 180 * math.pi)
+        if (angle * _) <= 180:
+            y = y_sun - math.sqrt(r_sun ** 2 - x ** 2)
+        else:
+            y = y_sun + math.sqrt(r_sun ** 2 - x ** 2)
+        inner_circle.append([x_sun - x, y])
+
+    # в новый список вносятся координаты концов лучей
+    for _ in range(int(360 / angle) + 1):
+        x = r_rays * math.cos((angle / 2 + angle * _) / 180 * math.pi)
+        if (angle * _) <= 180:
+            y = y_sun - math.sqrt(r_rays ** 2 - x ** 2)
+        else:
+            y = y_sun + math.sqrt(r_rays ** 2 - x ** 2)
+        outer_circle.append([x_sun - x, y])
+
+    # строится список с вершинами в точках из двух списков
+    for _ in range(int(360 / angle)):
+        rays.append(inner_circle[_])
+        rays.append(outer_circle[_])
+
+    polygon(screen, SUN_YELLOW, rays, 0)
+    return inner_circle
+
+
 def cloud(x_cl, y_cl, r_cl, delta_x, delta_y, cloud_size):
     """
-    Функция рисует облако из нескольких кругов со сдвигом по x на
+    Функция рисует облако из нескольких кругов
     :param x_cl: Координата центра первого круга
     :param y_cl: Координата центра первого круга
     :param r_cl: Радиус кругов
@@ -75,9 +113,9 @@ def cloud(x_cl, y_cl, r_cl, delta_x, delta_y, cloud_size):
         y_cl -= delta_y * (-1) ** _
 
 
-# umbrella
 def umbrella(x_um, y_um, width_rect_um, height_rect_um, width_polygon_um, height_polygon_um, colour_um):
     """
+    Функция рисует зонт
     :param x_um: Координата центра зонта по x
     :param y_um: Координата центра зонта по y
     :param width_rect_um: Ширина ножки зонта
@@ -102,9 +140,9 @@ def umbrella(x_um, y_um, width_rect_um, height_rect_um, width_polygon_um, height
              (x_um + width_rect_um + width_polygon_um - width_polygon_um * (_ + 1) / 5, y_um + height_polygon_um))
 
 
-# ship
 def ship(x_ship, y_ship, width_ship, height_ship, width_mast, height_mast, width_sail):
     """
+    Функция рисует корабль
     :param x_ship: Координата левого верхнего угла корпуса по x
     :param y_ship: Координата левого верхнего угла корпуса по y
     :param width_ship: Ширина корпуса
@@ -136,7 +174,7 @@ def ship(x_ship, y_ship, width_ship, height_ship, width_mast, height_mast, width
     # рисует корму корабля
     circle(screen, DARK_BROWN, (x_ship, y_ship), height_ship)
     # рисует прямоугольник, закрывающий верхнюю часть кормы
-    rect(screen, (0, 0, 255), (x_ship - height_ship, y_ship - height_ship, 2 * height_ship, height_ship))
+    rect(screen, BLUE, (x_ship - height_ship, y_ship - height_ship, 2 * height_ship, height_ship))
     # рисует нос корабля
     polygon(screen, DARK_BROWN, ship_nose_coordinates)
     # рисует глаз корабля
@@ -154,7 +192,7 @@ def ship(x_ship, y_ship, width_ship, height_ship, width_mast, height_mast, width
 
 
 # вызов функций, рисует все части картинки
-background(LIGHT_BLUE, BLUE, SAND_YELLOW, 0, 320, 25)
+background(LIGHT_BLUE, SAND_YELLOW, 0, 320, 25)
 sun(600, 60, 40)
 cloud(150, 100, 20, 20, 10, 7)
 cloud(100, 150, 25, 20, 10, 7)
@@ -163,7 +201,7 @@ umbrella(120, 260, 7, 200, 70, 40, PINK)
 umbrella(220, 290, 3, 100, 35, 20, PINK)
 ship(420, 250, 150, 35, 7, 100, 60)
 ship(200, 220, 75, 15, 3, 50, 30)
-
+sun_rays(600, 60, 7, 40, 50)
 ########################################################################################################################
 
 pygame.display.update()
